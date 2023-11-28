@@ -17,7 +17,7 @@ class RedPajamaDataset(Dataset):
     def __init__(self, data, max_length=1024):
         self.data = data
         self.tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
-        self.tokenizer.pad_token_id = 50256
+        self.tokenizer.pad_token_id = 50256  # 50257 is vocab size
         self.max_length = max_length
         self.vocab_size = self.tokenizer.vocab_size
 

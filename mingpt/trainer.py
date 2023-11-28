@@ -61,6 +61,21 @@ class Trainer:
         for callback in self.callbacks.get(onevent, []):
             callback(self)
 
+    def prepare(self, batch):
+        text = batch['text']
+        tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
+        tokenizer.pad_token_id = 50256
+        # Tokenize the text
+        tokens = tokenizer.encode(
+            text, add_special_tokens=True, max_length=1024, truncation=True, return_tensors='pt', padding=True)
+        # Split the tokens into chunks of max_length
+        # Shift the tokens to get targets (excluding the [CLS] token)
+        target_tokens = tokens[:, 1:].clone()  # Exclude the [CLS] token
+        # Exclude the last token to match the shifted targets
+        tokens = tokens[:, :-1]
+
+        return tokens, target_tokens
+
     def run(self):
         model, config = self.model, self.config
 
@@ -117,6 +132,7 @@ class Trainer:
 
             # forward the model
             logits, self.loss = model(x, y)
+            self.curr_loss.append(self.loss.detach())
 
             # backprop and update the parameters
             model.zero_grad(set_to_none=True)

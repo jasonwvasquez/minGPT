@@ -46,9 +46,14 @@ class CausalSelfAttention(nn.Module):
         # regularization
         self.attn_dropout = nn.Dropout(config.attn_pdrop)
         self.resid_dropout = nn.Dropout(config.resid_pdrop)
+        # if using UL2 then we don't use Causal Self Attention, this is a change
         # causal mask to ensure that attention is only applied to the left in the input sequence
-        self.register_buffer("bias", torch.tril(torch.ones(config.block_size, config.block_size))
-                             .view(1, 1, config.block_size, config.block_size))
+        if config.use_ul2:
+            self.register_buffer("bias", torch.ones(config.block_size, config.block_size)
+                                 .view(1, 1, config.block_size, config.block_size))
+        else:
+            self.register_buffer("bias", torch.tril(torch.ones(config.block_size, config.block_size))
+                                 .view(1, 1, config.block_size, config.block_size))
         self.n_head = config.n_head
         self.n_embd = config.n_embd
 
@@ -120,6 +125,7 @@ class GPT(nn.Module):
         C.embd_pdrop = 0.1
         C.resid_pdrop = 0.1
         C.attn_pdrop = 0.1
+        C.use_ul2 = False
         return C
 
     def __init__(self, config):
